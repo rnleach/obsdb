@@ -1,3 +1,14 @@
+# Local Project and IDE
+build
+Session.vim
+tags
+
+# Data files, may be in project for testing or inspection.
+*.csv
+
+# Generated documentation
+doc
+
 # Prerequisites
 *.d
 
