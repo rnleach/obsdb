@@ -57,7 +57,7 @@ endif
 
 .PHONY: all clean directories doc
 
-all: makefile directories doc $(TARGET)
+all: makefile directories $(TARGET)
 
 $(TARGET): directories makefile $(OBJS) 
 	@echo building library $@

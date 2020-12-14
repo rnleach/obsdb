@@ -5,6 +5,8 @@
  *
  * This uses sqlite3 behind the scenes and stores data in a database on the local file system.
  */
+#include <obs.h>
+
 #include <time.h>
 
 #include <sqlite3.h>
@@ -16,14 +18,12 @@
  *
  * \returns \c NULL on error.
  */
-// TODO make implementation stub
 sqlite3 *obs_db_open_create(void);
 
 /** Close down the database.
  *
  * \returns 0 on success, less than zero otherwise.
  */
-// TODO make implementation stub
 int obs_db_close(sqlite3 *db);
 
 /** Query the database to see if a request can be fulfilled.
@@ -34,26 +34,23 @@ int obs_db_close(sqlite3 *db);
  * \param site is the site in question, it must be in all lowercase.
  * \param start_time is the start time of the query.
  * \param end_time is the end time of the query.
- * \param rate is a number between 0 and 100. If the percentage of available data is less than this
- * level, it will try to download more data.
  *
  * \returns -1 if there is a database error, 0 if not enough data was available, and 1 if enough
  * data is available.
  */
-// TODO make implementation stub
 int obs_db_have_inventory(sqlite3 *db, char const *const element, char const *const site,
-                          time_t start_time, time_t end_time, unsigned rate);
+                          time_t start_time, time_t end_time);
 
 /** Get maximum temperatures.
  *
- * This is meant to be the second argument to obs_query_temperatures() to indicate that you want
+ * This is meant to be the second argument to obs_db_query_temperatures() to indicate that you want
  * the maximum temperature during that period.
  */
 #define OBS_DB_MAX_MODE 1
 
 /** Get minimum temperatures.
  *
- * This is meant to be the second argument to obs_query_temperatures() to indicate that you want
+ * This is meant to be the second argument to obs_db_query_temperatures() to indicate that you want
  * the minimum temperature during that period.
  */
 #define OBS_DB_MIN_MODE 2
@@ -71,12 +68,36 @@ int obs_db_have_inventory(sqlite3 *db, char const *const element, char const *co
  * freed with \c free().
  * \param num_results will be the number of \c TemperatureOb objects stored in \c results.
  *
- * \returns 0 on success, or a negative number upon failure.
+ * \returns 0 on success, or a negative number upon failure. If there is an error *results will be
+ * \c NULL and *num_results will be set to zero.
  *
  * The returned values are the maximum temperature within a window of \c window_length. The first
  * window starts at \c start_time, and each subsequent window starts 24 hours later.
  */
-// TODO make implementation stub
 int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
                               time_t start_time, time_t end_time, unsigned window_length,
                               struct TemperatureOb **results, size_t *num_results);
+
+/** Execute a query for temperatures.
+ *
+ * \param db the database handle to query.
+ * \param site is the site in question, it must be in all lowercase.
+ * \param start_time is the start time of the query.
+ * \param end_time is the end time of the query.
+ * \param window_length - the window length in hours.
+ * \param window_increment - the time in hours between when windows start.
+ * \param results will be stored in an array returned here. This returned array will need to be
+ * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. It's
+ * the user's responsibility to manage this memory, this function will not free it for you.
+ * \param num_results will be the number of PrecipitationOb objects stored in \a results. This must
+ * be 0 when passed in so it is consistent with the length of \a results.
+ *
+ *
+ * \returns 0 on success, or a negative number upon failure. If there is an error *results will be
+ * \c NULL and *num_results will be set to zero, which should be the same as when they were passed
+ * in as arguments.
+ *
+ */
+int obs_db_query_precipitation(sqlite3 *db, char const *const site, time_t start_time,
+                               time_t end_time, unsigned window_length, unsigned window_increment,
+                               struct PrecipitationOb **results, size_t *num_results);
