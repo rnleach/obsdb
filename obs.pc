@@ -6,9 +6,9 @@ includedir=${prefix}/include
 bindir=${prefix}/bin
 fmoddir=${prefix}/include
 
-libs=-Wl,-rpath,${libdir} -L${libdir} -lobs
+libs=-Wl,-rpath,${libdir} -L${libdir} -lobs -lcurl -lsqlite3 -lcsv
 
-libs_private=-lcurl -lsqlite3
+libs_private=
 
 cflags=-I${includedir} 
 
