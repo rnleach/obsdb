@@ -33,9 +33,9 @@ int obs_db_close(sqlite3 *db);
  * \param time_range the time range the query will cover.
  * \param missing_times If this is not \c 0, then any time ranges with missing data will be placed
  * in an allocated array here. If this is not \c 0, and there are no missing time ranges, the
- * pointed to pointer will be \c 0. \ref *missing_times must be \c 0 upon entry.
- * \param num_missing_times must not be \c 0 if \ref missing_times is not \c 0, otherwise it is
- * ignored. The number of values returned in \ref missing_times will be stored here. If there are no
+ * pointed to pointer will be \c 0. \a missing_times must be \c 0 upon entry.
+ * \param num_missing_times must not be \c 0 if \a missing_times is not \c 0, otherwise it is
+ * ignored. The number of values returned in \a missing_times will be stored here. If there are no
  * missing times, this will be set to zero.
  *
  * \returns -1 if there is an error, 0 if not enough data was available, and 1 if enough data is
@@ -69,10 +69,10 @@ int obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRan
  * \param window_length is the number of hours long the window is for each valid time.
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free().
- * \param num_results will be the number of \ref TemperatureOb objects stored in \ref results.
+ * \param num_results will be the number of \ref TemperatureOb objects stored in \a results.
  *
- * \returns 0 on success, or a negative number upon failure. If there is an error \ref results will
- * be \c NULL and \ref num_results will be set to zero.
+ * \returns 0 on success, or a negative number upon failure. If there is an error \a results will
+ * be \c NULL and \a num_results will be set to zero.
  *
  */
 int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
@@ -90,12 +90,12 @@ int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const s
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free(). It must be \c NULL (or \c 0) when passed in to ensure there is no memory
  * leak.
- * \param num_results will be the number of PrecipitationOb objects stored in \ref results. This
- * must be 0 when passed in so it is consistent with the length of \ref results.
+ * \param num_results will be the number of PrecipitationOb objects stored in \a results. This
+ * must be 0 when passed in so it is consistent with the length of \a results.
  *
  *
- * \returns 0 on success, or a negative number upon failure. If there is an error \ref results will
- * be \c NULL and \ref num_results will be set to zero, which should be the same as when they were
+ * \returns 0 on success, or a negative number upon failure. If there is an error \a results will
+ * be \c NULL and \a num_results will be set to zero, which should be the same as when they were
  * passed in as arguments.
  *
  */

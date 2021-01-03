@@ -17,22 +17,23 @@
 /*-------------------------------------------------------------------------------------------------
  *                       CSV Parsers and insert into sqlite database.
  *-----------------------------------------------------------------------------------------------*/
+/** Holds state for callbacks for libcsv, which are passing data to sqlite3.*/
 struct CsvToSqliteState {
-    sqlite3_stmt *insert_stmt; // The database we'll be storing this into.
+    sqlite3_stmt *insert_stmt; /**< The database we'll be storing this into. */
 
-    bool header_parsed; // Has the header row been parsed? So we have values for vt_col, t_col...
-    size_t col;         // Current column.
+    bool header_parsed; /**< Has the header row been parsed? So we have values for vt_col, t_col */
+    size_t col;         /**< Current column. */
 
-    size_t vt_col; // The column number for the valid time.
-    size_t t_col;  // The column number for the temperature data.
-    size_t p_col;  // The column number for the precipitation data.
+    size_t vt_col; /**< The column number for the valid time. */
+    size_t t_col;  /**< The column number for the temperature data. */
+    size_t p_col;  /**< The column number for the precipitation data. */
 
-    time_t valid_time; // The valid time of the observation.
-    char const *site;  // The site name as returned from the query, this is an alias, do not free.
-    double t_f;        // Temperature in Fahrenheit.
-    double p_in;       // Precipitation in inches.
+    time_t valid_time; /**< The valid time of the observation. */
+    char const *site;  /**< The site name from the query, this is an alias, do not free. */
+    double t_f;        /**< Temperature in Fahrenheit. */
+    double p_in;       /**< Precipitation in inches. */
 
-    bool error;
+    bool error; /**< Whether an error has occurred. */
 };
 
 static struct CsvToSqliteState
@@ -219,11 +220,12 @@ row_callback(int cause_char, void *userdata)
 /*-------------------------------------------------------------------------------------------------
  *                       CURL state and callback for handling data.
  *-----------------------------------------------------------------------------------------------*/
+/**Holds state for callbacks from cURL to libcsv. */
 struct CurlToCsvState {
-    struct CsvToSqliteState *csv_state;
-    struct csv_parser parser;
+    struct CsvToSqliteState *csv_state; /**< State to pass through to the csv parser. */
+    struct csv_parser parser;           /**< The csv parser. */
 
-    bool error;
+    bool error; /**< Has an error occurred yet in processing. */
 };
 
 static struct CurlToCsvState
