@@ -41,7 +41,7 @@ struct ObsStore *
 obs_connect(char const *const synoptic_labs_api_key)
 {
     // using calloc forces both members to null.
-    struct ObsStore *new = calloc(1, sizeof(struct ObsStore));
+    struct ObsStore *new = calloc(1, sizeof(*new));
     StopIf(!new, return 0, "Memory allocation error.");
 
     sqlite3 *db = obs_db_open_create();
@@ -96,16 +96,15 @@ obs_close(struct ObsStore **store)
  */
 static int
 obs_store_query_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
-            unsigned window_end, unsigned window_length, struct ObsTemperature **results,
-            size_t *num_results, int max_min_mode)
+                  unsigned window_end, unsigned window_length, struct ObsTemperature **results,
+                  size_t *num_results, int max_min_mode)
 {
     assert(max_min_mode == OBS_DB_MAX_MODE || max_min_mode == OBS_DB_MIN_MODE);
 
     char site_buf[32] = {0};
     obs_util_strcpy_to_lowercase(sizeof(site_buf), site_buf, site);
 
-    // Expand the time range to get enough data for ALL windows starting in the provided time
-    // range.
+    // Expand the time range to get enough data for ALL windows ending in the provided time range.
     struct ObsTimeRange need_hourlies_tr = tr;
     need_hourlies_tr.start -= HOURSEC * window_length;
 
@@ -115,14 +114,7 @@ obs_store_query_t(struct ObsStore *store, char const *const site, struct ObsTime
     int have_data = obs_db_have_inventory(store->db, site_buf, need_hourlies_tr, &missing_ranges,
                                           &num_missing_ranges);
 
-    char *msg = 0;
-    if (max_min_mode == OBS_DB_MAX_MODE) {
-        msg = "maximum";
-    } else if (max_min_mode == OBS_DB_MIN_MODE) {
-        msg = "minimum";
-    }
-
-    StopIf(have_data < 0, return -1, "%s temperature query aborted, database error.", msg);
+    StopIf(have_data < 0, return -1, "temperature query aborted, database error.");
 
     int rc = 0;
     if (!have_data) {
@@ -160,7 +152,7 @@ obs_query_max_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
     assert(*num_results == 0 && results && !*results);
 
     return obs_store_query_t(store, site, tr, window_end, window_length, results, num_results,
-                       OBS_DB_MAX_MODE);
+                             OBS_DB_MAX_MODE);
 }
 
 int
@@ -172,7 +164,7 @@ obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
     assert(*num_results == 0 && results && !*results);
 
     return obs_store_query_t(store, site, tr, window_end, window_length, results, num_results,
-                       OBS_DB_MIN_MODE);
+                             OBS_DB_MIN_MODE);
 }
 
 int
@@ -186,8 +178,7 @@ obs_query_precipitation(struct ObsStore *store, char const *const site, struct O
     char site_buf[32] = {0};
     obs_util_strcpy_to_lowercase(sizeof(site_buf), site_buf, site);
 
-    // Expand the time range to get enough data for ALL windows ending in the provided time
-    // range.
+    // Expand the time range to get enough data for ALL windows ending in the provided time range.
     struct ObsTimeRange need_hourlies_tr = tr;
     need_hourlies_tr.start -= HOURSEC * window_length;
 
