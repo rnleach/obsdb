@@ -86,8 +86,8 @@ ifeq ($(detected_OS), Linux)
 	lib_dir = ~/usr/lib
 	inc_dir = ~/usr/include
 else
-	lib_dir = ~/lib
-	inc_dir = ~/include
+	lib_dir = ~/usr/lib
+	inc_dir = ~/usr/include
 endif
 
 install: $(TARGET) makefile
