@@ -726,10 +726,10 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 # For external use only document the extrernal API.
-#INPUT                  = src/obs.h
+INPUT                  = src/obs.h
 
 # For internal development document all code.
-INPUT                  = src/
+#INPUT                  = src/
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

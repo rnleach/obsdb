@@ -10,7 +10,7 @@
 #include <time.h>
 
 /** A time range. */
-struct TimeRange {
+struct ObsTimeRange {
     time_t start; /**< The starting time, must be less than or equal to \ref end. */
     time_t end;   /**< The ending time, must be greater than or equal to \ref start. */
 };
@@ -21,8 +21,8 @@ struct TemperatureOb {
      *
      * If the observation is valid for a specific time, the the valid time will have that time. If
      * it is valid for a period, for instance if it is a daily maximum or minumum temperature, the
-     * valid time is for the time at the beginning of the valid period. The length of the valid
-     * period will have to be deduced from the function call that created this object.
+     * valid time is for the time at the end of the valid period. The length of the valid period 
+     * will have to be deduced from the function call that created this object.
      */
     time_t valid_time;
 
@@ -50,22 +50,22 @@ struct PrecipitationOb {
  */
 typedef struct ObsStore ObsStore;
 
-/** Initialize a \ref TimeRange
+/** Initialize a \ref ObsTimeRange
  *
  * \param tr is the object to initialize.
- * \param start is the start time, it must be less than or equal to \ref end.
- * \param end is the end time, it must be greater than or equal to \ref start.
+ * \param start is the start time, it must be less than or equal to \a end.
+ * \param end is the end time, it must be greater than or equal to \a start.
  *
  * \returns a pointer to the initialized object, or \c NULL if there was an error. The only
- * conceivable error at the time of writing is that \ref start > \ref end.
+ * conceivable error at the time of writing is that \a start > \a end.
  */
-struct TimeRange *time_range_init(struct TimeRange *tr, time_t start, time_t end);
+struct ObsTimeRange *obs_time_range_init(struct ObsTimeRange *tr, time_t start, time_t end);
 
-/** Print a \ref TimeRange.
+/** Print a \ref ObsTimeRange.
  *
  * Meant for debugging mostly.
  */
-void time_range_print(struct TimeRange tr);
+void obs_time_range_print(struct ObsTimeRange tr);
 
 /** Connect to the default \c ObsStore.
  *
@@ -84,23 +84,20 @@ void obs_close(ObsStore **store);
  *
  * \param store the data store to query.
  * \param site is the site identifier.
- * \param time_range is the \ref TimeRange that starts at the beginning of the first window and ends
- * at a time after which no window will start, though one may end after it.
+ * \param time_range is the \ref ObsTimeRange which the end time of all windows will fall into.
  * \param window_end the UTC hour of the day that the observation window ends.
  * \param window_length - the window length in hours.
  * \param results will be stored in an array returned here. This returned array will need to be
- * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. It's
- * the user's responsibility to manage this memory, this function will not free it for you.
+ * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak.
  * \param num_results will be the number of TemperatureOb objects stored in \a results. This must
  * be 0 when passed in so it is consistent with the length of \a results.
  *
  * \returns 0 on success, or a negative number upon failure.
  *
- * The returned values are the maximum temperature within a window of \ref c window_length. The
- * first window starts at the beginning of \ref time_range, and each subsequent window starts 24
- * hours later.
+ * The returned values are the maximum temperature within a window of \a window_length and the 
+ * time at the END of that window. All end times falling with \a time_range are returned.
  */
-int obs_query_max_t(ObsStore *store, char const *const site, struct TimeRange time_range,
+int obs_query_max_t(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
                     unsigned window_end, unsigned window_length, struct TemperatureOb **results,
                     size_t *num_results);
 
@@ -108,23 +105,20 @@ int obs_query_max_t(ObsStore *store, char const *const site, struct TimeRange ti
  *
  * \param store the data store to query.
  * \param site is the site identifier.
- * \param time_range is the \ref TimeRange that starts at the beginning of the first window and ends
- * at a time after which no window will start, though one may end after it.
+ * \param time_range is the \ref ObsTimeRange which the end time of all windows will fall into.
  * \param window_end the UTC hour of the day that the observation window ends.
- * \param window_length - the window length in hours.
+ * \param window_length the window length in hours.
  * \param results will be stored in an array returned here. This returned array will need to be
- * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. It's
- * the user's responsibility to manage this memory, this function will not free it for you.
+ * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak.
  * \param num_results will be the number of TemperatureOb objects stored in \a results. This must
  * be 0 when passed in so it is consistent with the length of \a results.
  *
  * \returns 0 on success, or a negative number upon failure.
  *
- * The returned values are the minimum temperature within a window of \c window_length. The first
- * window starts at the beginning of \ref time_range, and each subsequent window starts 24 hours
- * later.
+ * The returned values are the maximum temperature within a window of \a window_length and the 
+ * time at the END of that window. All end times falling with \a time_range are returned.
  */
-int obs_query_min_t(ObsStore *store, char const *const site, struct TimeRange time_range,
+int obs_query_min_t(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
                     unsigned window_end, unsigned window_length, struct TemperatureOb **results,
                     size_t *num_results);
 
@@ -132,23 +126,20 @@ int obs_query_min_t(ObsStore *store, char const *const site, struct TimeRange ti
  *
  * \param store the data store to query.
  * \param site is the site identifier.
- * \param time_range is the \ref TimeRange that starts at the beginning of the first window and ends
- * at a time after which no window will start, though one may end after it.
  * \param window_length - the window length in hours.
+ * \param time_range is the \ref ObsTimeRange which the end time of all windows will fall into.
  * \param window_increment - the time in hours between when windows start.
  * \param results will be stored in an array returned here. This returned array will need to be
- * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. It's
- * the user's responsibility to manage this memory, this function will not free it for you.
+ * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. 
  * \param num_results will be the number of PrecipitationOb objects stored in \a results. This must
  * be 0 when passed in so it is consistent with the length of \a results.
  *
- *
  * \returns 0 on success, or a negative number upon failure.
  *
- * The returned values are the accumulated precipitation within a window of \ref window_length. The
- * first window starts at the beginning of \ref time_range , and each subsequent window starts
- * \ref window_increment hours later.
+ * The returned values are the accumulated precipitation within a window of \a window_length. The
+ * first window starts at the beginning of \a time_range , and each subsequent window starts
+ * \a window_increment hours later.
  */
-int obs_query_precipitation(ObsStore *store, char const *const site, struct TimeRange time_range,
+int obs_query_precipitation(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
                             unsigned window_length, unsigned window_increment,
                             struct PrecipitationOb **results, size_t *num_results);

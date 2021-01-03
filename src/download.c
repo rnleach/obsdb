@@ -271,7 +271,7 @@ curl_callback(char *ptr, size_t size, size_t nmember, void *userdata)
  *-----------------------------------------------------------------------------------------------*/
 static char *
 obs_download_create_synoptic_labs_url(char const *const api_key, char const *site_id,
-                                      struct TimeRange tr)
+                                      struct ObsTimeRange tr)
 {
     static char const *const base_url = "https://api.synopticdata.com/v2/stations/timeseries?"
                                         "stid=%s"
@@ -338,7 +338,7 @@ ERR_RETURN:
  *-----------------------------------------------------------------------------------------------*/
 int
 obs_download(sqlite3 *local_store, CURL **curl, char const *const synoptic_labs_api_key,
-             char const *site_id, struct TimeRange tr)
+             char const *site_id, struct ObsTimeRange tr)
 {
     int return_code = 0;
 

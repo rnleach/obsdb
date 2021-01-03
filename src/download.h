@@ -22,4 +22,4 @@
  * \returns 0 on success and -1 on failure.
  */
 int obs_download(sqlite3 *local_store, CURL **curl, char const *const synoptic_labs_api_key,
-                 char const *site_id, struct TimeRange time_range);
+                 char const *site_id, struct ObsTimeRange time_range);

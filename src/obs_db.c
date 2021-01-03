@@ -141,7 +141,7 @@ obs_db_close(sqlite3 *db)
  * If there is an error it returns \c SIZE_MAX
  */
 static size_t
-obs_db_count_rows_in_range(sqlite3 *db, char const *const site, struct TimeRange tr)
+obs_db_count_rows_in_range(sqlite3 *db, char const *const site, struct ObsTimeRange tr)
 {
     sqlite3_stmt *statement = 0;
 
@@ -204,8 +204,8 @@ EARLY_RETURN:
 }
 
 int
-obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange tr,
-                      struct TimeRange **missing_ranges, size_t *num_missing_ranges)
+obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
+                      struct ObsTimeRange **missing_ranges, size_t *num_missing_ranges)
 {
     assert(site && "null site");
     assert(tr.start < tr.end && "time range ends before it starts!");
@@ -217,7 +217,7 @@ obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange tr,
            "for the number of missing time ranges: num_missing_ranges is NULL");
 
     size_t num_tr = 0;
-    struct TimeRange trs[100] = {0};
+    struct ObsTimeRange trs[100] = {0};
 
     char query[256] = {0};
     sprintf(query,
@@ -245,7 +245,7 @@ obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange tr,
 
     if (t1 > tr.start && difftime(t1, tr.start) > 4000.0) {
         // Missing a chunk at the beginning.
-        trs[num_tr] = (struct TimeRange){.start = tr.start, .end = t1};
+        trs[num_tr] = (struct ObsTimeRange){.start = tr.start, .end = t1};
         num_tr++;
     }
 
@@ -261,7 +261,7 @@ obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange tr,
 
         double gap_seconds = difftime(t1, t0);
         if (gap_seconds > 4000.0) {
-            trs[num_tr] = (struct TimeRange){.start = t0, .end = t1};
+            trs[num_tr] = (struct ObsTimeRange){.start = t0, .end = t1};
             num_tr++;
             if (num_tr >= sizeof(trs) / sizeof(trs[0])) {
                 // We're out of space, do the best you can. This is crazy.
@@ -272,7 +272,7 @@ obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange tr,
 
     if (tr.end > t1 && difftime(tr.end, t1) > 4000.0) {
         // Missing a chunk at the end.
-        trs[num_tr] = (struct TimeRange){.start = t1, .end = tr.end};
+        trs[num_tr] = (struct ObsTimeRange){.start = t1, .end = tr.end};
         num_tr++;
     }
 
@@ -287,7 +287,7 @@ ALLOCATE_AND_RETURN:
         return 1;
     } else {
         *num_missing_ranges = num_tr;
-        *missing_ranges = calloc(num_tr, sizeof(struct TimeRange));
+        *missing_ranges = calloc(num_tr, sizeof(struct ObsTimeRange));
         StopIf(!*missing_ranges, goto ERR_RETURN, "out of memory");
         memcpy(*missing_ranges, trs, num_tr * sizeof(trs[0]));
         return 0;
@@ -302,10 +302,10 @@ ERR_RETURN:
 }
 
 static size_t
-obs_db_query_calculate_num_results(struct TimeRange tr, unsigned window_increment)
+obs_db_query_calculate_num_results(struct ObsTimeRange tr, unsigned window_increment)
 {
     double diff_seconds = difftime(tr.end, tr.start);
-    StopIf(diff_seconds < 0.0, return SIZE_MAX, "backwards TimeRange");
+    StopIf(diff_seconds < 0.0, return SIZE_MAX, "backwards ObsTimeRange");
 
     double num_results = (diff_seconds + 1) / HOURSEC / window_increment;
     StopIf(num_results >= (double)SIZE_MAX / 2.0, return SIZE_MAX,
@@ -350,7 +350,7 @@ EARLY_RETURN:
 }
 
 static int
-obs_db_query_temperatures_get_hourlies(sqlite3 *db, char const *const site, struct TimeRange tr,
+obs_db_query_temperatures_get_hourlies(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
                                        struct TemperatureOb **hourlies, size_t *num_hourlies)
 {
     sqlite3_stmt *statement = 0;
@@ -440,7 +440,7 @@ obs_db_query_temperatures_max_min_in_window(struct TemperatureOb **last_start, s
 
 int
 obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
-                          struct TimeRange tr, unsigned window_end, unsigned window_length,
+                          struct ObsTimeRange tr, unsigned window_end, unsigned window_length,
                           struct TemperatureOb **results, size_t *num_results)
 {
     assert(results && !*results && "results is null or points to non-null pointer");
@@ -535,7 +535,7 @@ EARLY_RETURN:
 }
 
 static int
-obs_db_query_precipitation_get_hourlies(sqlite3 *db, char const *const site, struct TimeRange tr,
+obs_db_query_precipitation_get_hourlies(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
                                         struct PrecipitationOb **hourlies, size_t *num_hourlies)
 {
     sqlite3_stmt *statement = 0;
@@ -637,7 +637,7 @@ obs_db_query_precipitation_accumulation_in_window(struct PrecipitationOb **last_
 }
 
 int
-obs_db_query_precipitation(sqlite3 *db, char const *const site, struct TimeRange tr,
+obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
                            unsigned window_length, unsigned window_increment,
                            struct PrecipitationOb **results, size_t *num_results)
 {

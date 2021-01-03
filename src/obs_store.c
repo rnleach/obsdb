@@ -95,7 +95,7 @@ obs_close(struct ObsStore **store)
  * All parameters other than \a max_min_mode are as in obs_query_max_t() and obs_query_min_t().
  */
 static int
-obs_query_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
+obs_query_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
             unsigned window_end, unsigned window_length, struct TemperatureOb **results,
             size_t *num_results, int max_min_mode)
 {
@@ -106,10 +106,10 @@ obs_query_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
 
     // Expand the time range to get enough data for ALL windows starting in the provided time
     // range.
-    struct TimeRange need_hourlies_tr = tr;
+    struct ObsTimeRange need_hourlies_tr = tr;
     need_hourlies_tr.start -= HOURSEC * window_length;
 
-    struct TimeRange *missing_ranges = 0;
+    struct ObsTimeRange *missing_ranges = 0;
     size_t num_missing_ranges = 0;
 
     int have_data = obs_db_have_inventory(store->db, site_buf, need_hourlies_tr, &missing_ranges,
@@ -152,7 +152,7 @@ ERR_RETURN:
 }
 
 int
-obs_query_max_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
+obs_query_max_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
                 unsigned window_end, unsigned window_length, struct TemperatureOb **results,
                 size_t *num_results)
 {
@@ -164,7 +164,7 @@ obs_query_max_t(struct ObsStore *store, char const *const site, struct TimeRange
 }
 
 int
-obs_query_min_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
+obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
                 unsigned window_end, unsigned window_length, struct TemperatureOb **results,
                 size_t *num_results)
 {
@@ -176,7 +176,7 @@ obs_query_min_t(struct ObsStore *store, char const *const site, struct TimeRange
 }
 
 int
-obs_query_precipitation(struct ObsStore *store, char const *const site, struct TimeRange tr,
+obs_query_precipitation(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
                         unsigned window_length, unsigned window_increment,
                         struct PrecipitationOb **results, size_t *num_results)
 {
@@ -188,10 +188,10 @@ obs_query_precipitation(struct ObsStore *store, char const *const site, struct T
 
     // Expand the time range to get enough data for ALL windows ending in the provided time
     // range.
-    struct TimeRange need_hourlies_tr = tr;
+    struct ObsTimeRange need_hourlies_tr = tr;
     need_hourlies_tr.start -= HOURSEC * window_length;
 
-    struct TimeRange *missing_ranges = 0;
+    struct ObsTimeRange *missing_ranges = 0;
     size_t num_missing_ranges = 0;
 
     int have_data = obs_db_have_inventory(store->db, site_buf, need_hourlies_tr, &missing_ranges,

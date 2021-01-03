@@ -41,8 +41,8 @@ int obs_db_close(sqlite3 *db);
  * \returns -1 if there is an error, 0 if not enough data was available, and 1 if enough data is
  * available.
  */
-int obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange time_range,
-                          struct TimeRange **missing_times, size_t *num_missing_times);
+int obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRange time_range,
+                          struct ObsTimeRange **missing_times, size_t *num_missing_times);
 
 /** Get maximum temperatures.
  *
@@ -76,7 +76,7 @@ int obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange 
  *
  */
 int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
-                              struct TimeRange time_range, unsigned window_end,
+                              struct ObsTimeRange time_range, unsigned window_end,
                               unsigned window_length, struct TemperatureOb **results,
                               size_t *num_results);
 
@@ -99,7 +99,7 @@ int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const s
  * passed in as arguments.
  *
  */
-int obs_db_query_precipitation(sqlite3 *db, char const *const site, struct TimeRange time_range,
+int obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRange time_range,
                                unsigned window_length, unsigned window_increment,
                                struct PrecipitationOb **results, size_t *num_results);
 

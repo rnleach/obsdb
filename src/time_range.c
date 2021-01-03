@@ -7,11 +7,11 @@
 
 #include <stdio.h>
 
-struct TimeRange *
-time_range_init(struct TimeRange *tr, time_t start, time_t end)
+struct ObsTimeRange *
+obs_time_range_init(struct ObsTimeRange *tr, time_t start, time_t end)
 {
     if (start > end) {
-        *tr = (struct TimeRange){0};
+        *tr = (struct ObsTimeRange){0};
         return 0;
     }
 
@@ -22,7 +22,7 @@ time_range_init(struct TimeRange *tr, time_t start, time_t end)
 }
 
 void
-time_range_print(struct TimeRange tr)
+obs_time_range_print(struct ObsTimeRange tr)
 {
     struct tm start = *gmtime(&tr.start);
     struct tm end = *gmtime(&tr.end);
