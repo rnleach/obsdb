@@ -95,7 +95,7 @@ obs_close(struct ObsStore **store)
  * All parameters other than \a max_min_mode are as in obs_query_max_t() and obs_query_min_t().
  */
 static int
-obs_query_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
+obs_store_query_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
             unsigned window_end, unsigned window_length, struct ObsTemperature **results,
             size_t *num_results, int max_min_mode)
 {
@@ -159,7 +159,7 @@ obs_query_max_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
     // These conditions are specified in the documentation.
     assert(*num_results == 0 && results && !*results);
 
-    return obs_query_t(store, site, tr, window_end, window_length, results, num_results,
+    return obs_store_query_t(store, site, tr, window_end, window_length, results, num_results,
                        OBS_DB_MAX_MODE);
 }
 
@@ -171,7 +171,7 @@ obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
     // These conditions are specified in the documentation.
     assert(*num_results == 0 && results && !*results);
 
-    return obs_query_t(store, site, tr, window_end, window_length, results, num_results,
+    return obs_store_query_t(store, site, tr, window_end, window_length, results, num_results,
                        OBS_DB_MIN_MODE);
 }
 
