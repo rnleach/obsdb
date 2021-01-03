@@ -87,6 +87,7 @@ int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const s
  * \param time_range the time range the query will cover.
  * \param window_length - the window length in hours.
  * \param window_increment - the time in hours between when windows start.
+ * \param window_offset - the same as \ref obs_query_precipitation().
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free(). It must be \c NULL (or \c 0) when passed in to ensure there is no memory
  * leak.
@@ -101,7 +102,8 @@ int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const s
  */
 int obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRange time_range,
                                unsigned window_length, unsigned window_increment,
-                               struct ObsPrecipitation **results, size_t *num_results);
+                               unsigned window_offset, struct ObsPrecipitation **results,
+                               size_t *num_results);
 
 /** Start a transaction on the local store.
  *

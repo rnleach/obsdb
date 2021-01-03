@@ -459,7 +459,7 @@ obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
     StopIf(!*results, goto ERR_RETURN, "out of memory");
 
     struct tm end_prd_tm = *gmtime(&tr.start);
-    end_prd_tm.tm_hour = 0;
+    end_prd_tm.tm_hour = window_end;
     end_prd_tm.tm_min = 0;
     end_prd_tm.tm_sec = 0;
 
@@ -639,7 +639,8 @@ obs_db_query_precipitation_accumulation_in_window(struct ObsPrecipitation **last
 int
 obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
                            unsigned window_length, unsigned window_increment,
-                           struct ObsPrecipitation **results, size_t *num_results)
+                           unsigned window_offset, struct ObsPrecipitation **results,
+                           size_t *num_results)
 {
     assert(results && !*results && "results is null or points to non-null pointer");
     assert(*num_results == 0 && "*num_results not initalized to zero");
@@ -657,11 +658,14 @@ obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRa
     StopIf(!*results, goto ERR_RETURN, "out of memory");
 
     struct tm end_prd_tm = *gmtime(&tr.start);
-    end_prd_tm.tm_hour = 0;
+    end_prd_tm.tm_hour = window_offset;
     end_prd_tm.tm_min = 0;
     end_prd_tm.tm_sec = 0;
 
     time_t end_prd = timegm(&end_prd_tm);
+    while (end_prd > tr.start) {
+        end_prd -= HOURSEC * window_increment;
+    }
     while (end_prd < tr.start) {
         end_prd += HOURSEC * window_increment;
     }

@@ -128,7 +128,8 @@ int obs_query_min_t(ObsStore *store, char const *const site, struct ObsTimeRange
  * \param site is the site identifier.
  * \param window_length - the window length in hours.
  * \param time_range is the \ref ObsTimeRange which the end time of all windows will fall into.
- * \param window_increment - the time in hours between when windows start.
+ * \param window_increment the time in hours between when windows start.
+ * \param window_offset is the number of hours offset from 00Z the first ends.
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak.
  * \param num_results will be the number of \ref ObsPrecipitation objects stored in \a results.
@@ -137,9 +138,14 @@ int obs_query_min_t(ObsStore *store, char const *const site, struct ObsTimeRange
  * \returns 0 on success, or a negative number upon failure.
  *
  * The returned values are the accumulated precipitation within a window of \a window_length. The
- * first window starts at the beginning of \a time_range , and each subsequent window starts
- * \a window_increment hours later.
+ * first window ends at \a window_offset or \a window_offset plus enough \a window_increments to
+ * get it the shorttest time possible after the start of \a time_range, and each subsequent window
+ * ends \a window_increment hours later.
+ *
+ * So if \a time_range starts at 12Z on a day, and \a window_offset is 7, then 13Z that day will be
+ * the end time of the first window.
  */
 int obs_query_precipitation(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
                             unsigned window_length, unsigned window_increment,
-                            struct ObsPrecipitation **results, size_t *num_results);
+                            unsigned window_offset, struct ObsPrecipitation **results,
+                            size_t *num_results);

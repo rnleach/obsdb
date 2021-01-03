@@ -169,7 +169,7 @@ obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
 
 int
 obs_query_precipitation(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
-                        unsigned window_length, unsigned window_increment,
+                        unsigned window_length, unsigned window_increment, unsigned window_offset,
                         struct ObsPrecipitation **results, size_t *num_results)
 {
     // These conditions are specified in the documentation.
@@ -202,7 +202,7 @@ obs_query_precipitation(struct ObsStore *store, char const *const site, struct O
 
     // Just take whatever data is available from the database now that we have tried to update it.
     rc = obs_db_query_precipitation(store->db, site_buf, tr, window_length, window_increment,
-                                    results, num_results);
+                                    window_offset, results, num_results);
     StopIf(rc < 0, goto ERR_RETURN, "Error fetching data from local store.");
 
     free(missing_ranges);
