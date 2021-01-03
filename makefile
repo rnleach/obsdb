@@ -10,11 +10,11 @@ TARGET = $(BUILDDIR)/libobs.a
 TARGET_API = $(SOURCEDIR)/obs.h
 TARGET_DOC = $(PROJDIR)/Doxyfile
 
-CFLAGS = -g -fPIC -Wall -Werror -O3 -std=c11 -I$(SOURCEDIR)
+CFLAGS = -g -fPIC -Wall -Werror -pedantic -O3 -std=c11 -I$(SOURCEDIR)
 
 # -------------------------------------------------------------------------------------------------
 # enable some time functions for POSIX
-CFLAGS += -D_DEFAULT_SOURCE -D_XOPEN_SOURCE -D_GNU_SOURCE
+CFLAGS += -D_GNU_SOURCE
 
 # cURL library
 CFLAGS += `curl-config --cflags`
@@ -83,11 +83,16 @@ clean:
 
 detected_OS = $(shell uname)
 ifeq ($(detected_OS), Linux)
-	target_dir = ~/usr/lib/
+	lib_dir = ~/usr/lib
+	inc_dir = ~/usr/include
 else
-	target_dir = ~/lib/
+	lib_dir = ~/lib
+	inc_dir = ~/include
 endif
 
 install: $(TARGET) makefile
-	strip $(TARGET) && cp $(TARGET) $(target_dir)
+	cp $(TARGET) $(lib_dir)/
+	cp $(BUILDDIR)/obs.h $(inc_dir)/
+	cp $(PROJDIR)/obs.pc $(lib_dir)/pkgconfig/
+	
 

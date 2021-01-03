@@ -1,0 +1,24 @@
+
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+bindir=${prefix}/bin
+fmoddir=${prefix}/include
+
+libs=-Wl,-rpath,${libdir} -L${libdir} -lobs
+
+libs_private=-lcurl -lsqlite3
+
+cflags=-I${includedir} 
+
+#====================================================================
+Name: obs
+Description: Weather observations store, downloads data from SynopticLabs as needed.
+Version: 1.0.0
+Libs: ${libs}
+Libs.private: ${libs_private}
+Requires: 
+Requires.private: 
+Cflags: ${cflags}
+#====================================================================
