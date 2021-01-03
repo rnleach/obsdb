@@ -96,7 +96,7 @@ obs_close(struct ObsStore **store)
  */
 static int
 obs_query_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
-            unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+            unsigned window_end, unsigned window_length, struct ObsTemperature **results,
             size_t *num_results, int max_min_mode)
 {
     assert(max_min_mode == OBS_DB_MAX_MODE || max_min_mode == OBS_DB_MIN_MODE);
@@ -153,7 +153,7 @@ ERR_RETURN:
 
 int
 obs_query_max_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
-                unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+                unsigned window_end, unsigned window_length, struct ObsTemperature **results,
                 size_t *num_results)
 {
     // These conditions are specified in the documentation.
@@ -165,7 +165,7 @@ obs_query_max_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
 
 int
 obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
-                unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+                unsigned window_end, unsigned window_length, struct ObsTemperature **results,
                 size_t *num_results)
 {
     // These conditions are specified in the documentation.
@@ -178,7 +178,7 @@ obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
 int
 obs_query_precipitation(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
                         unsigned window_length, unsigned window_increment,
-                        struct PrecipitationOb **results, size_t *num_results)
+                        struct ObsPrecipitation **results, size_t *num_results)
 {
     // These conditions are specified in the documentation.
     assert(*num_results == 0 && results && !*results);

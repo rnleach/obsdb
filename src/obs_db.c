@@ -2,8 +2,8 @@
  *
  * \brief Internal implementation of the local portion of the ObsStore
  */
-#include "obs.h"
 #include "obs_db.h"
+#include "obs.h"
 #include "utils.h"
 
 #include <assert.h>
@@ -316,7 +316,7 @@ obs_db_query_calculate_num_results(struct ObsTimeRange tr, unsigned window_incre
 
 static int
 obs_db_query_temperatures_get_hourlies_step_row(sqlite3_stmt *statement,
-                                                struct TemperatureOb ob[static 1])
+                                                struct ObsTemperature ob[static 1])
 {
     int rc = sqlite3_step(statement);
     StopIf(rc != SQLITE_ROW && rc != SQLITE_DONE, goto EARLY_RETURN, "error executing select: %s\n",
@@ -345,13 +345,13 @@ obs_db_query_temperatures_get_hourlies_step_row(sqlite3_stmt *statement,
 
 EARLY_RETURN:
 
-    *ob = (struct TemperatureOb){0};
+    *ob = (struct ObsTemperature){0};
     return rc;
 }
 
 static int
 obs_db_query_temperatures_get_hourlies(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
-                                       struct TemperatureOb **hourlies, size_t *num_hourlies)
+                                       struct ObsTemperature **hourlies, size_t *num_hourlies)
 {
     sqlite3_stmt *statement = 0;
 
@@ -360,7 +360,7 @@ obs_db_query_temperatures_get_hourlies(sqlite3 *db, char const *const site, stru
 
     *hourlies = calloc(num_rows, sizeof(**hourlies));
     StopIf(!*hourlies, goto ERR_RETURN, "out of memory");
-    struct TemperatureOb *lcl_hourlies = *hourlies;
+    struct ObsTemperature *lcl_hourlies = *hourlies;
 
     char query[256] = {0};
     sprintf(query,
@@ -404,14 +404,14 @@ ERR_RETURN:
 }
 
 static double
-obs_db_query_temperatures_max_min_in_window(struct TemperatureOb **last_start, size_t *len,
+obs_db_query_temperatures_max_min_in_window(struct ObsTemperature **last_start, size_t *len,
                                             time_t start, time_t end, int max_min_mode)
 {
     double max_min_val = NAN;
 
-    struct TemperatureOb *end_ptr = *last_start + *len;
+    struct ObsTemperature *end_ptr = *last_start + *len;
 
-    for (struct TemperatureOb *next = *last_start; next < end_ptr; next++) {
+    for (struct ObsTemperature *next = *last_start; next < end_ptr; next++) {
         time_t vt = next->valid_time;
         double val = next->temperature_f;
 
@@ -441,12 +441,12 @@ obs_db_query_temperatures_max_min_in_window(struct TemperatureOb **last_start, s
 int
 obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
                           struct ObsTimeRange tr, unsigned window_end, unsigned window_length,
-                          struct TemperatureOb **results, size_t *num_results)
+                          struct ObsTemperature **results, size_t *num_results)
 {
     assert(results && !*results && "results is null or points to non-null pointer");
     assert(*num_results == 0 && "*num_results not initalized to zero");
 
-    struct TemperatureOb *hourlies = 0;
+    struct ObsTemperature *hourlies = 0;
     size_t num_hourlies = 0;
 
     int rc = obs_db_query_temperatures_get_hourlies(db, site, tr, &hourlies, &num_hourlies);
@@ -468,8 +468,8 @@ obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
         end_prd += HOURSEC * 24;
     }
 
-    struct TemperatureOb *lcl_results = *results;
-    struct TemperatureOb *last_start = hourlies;
+    struct ObsTemperature *lcl_results = *results;
+    struct ObsTemperature *last_start = hourlies;
     size_t last_start_size = num_hourlies;
     while (end_prd < tr.end && *num_results < calc_num_res) {
         time_t str_prd = end_prd - HOURSEC * window_length;
@@ -501,7 +501,7 @@ ERR_RETURN:
 
 static int
 obs_db_query_pecipitation_get_hourlies_step_row(sqlite3_stmt *statement,
-                                                struct PrecipitationOb ob[static 1])
+                                                struct ObsPrecipitation ob[static 1])
 {
     int rc = sqlite3_step(statement);
     StopIf(rc != SQLITE_ROW && rc != SQLITE_DONE, goto EARLY_RETURN, "error executing select: %s\n",
@@ -530,13 +530,13 @@ obs_db_query_pecipitation_get_hourlies_step_row(sqlite3_stmt *statement,
 
 EARLY_RETURN:
 
-    *ob = (struct PrecipitationOb){0};
+    *ob = (struct ObsPrecipitation){0};
     return rc;
 }
 
 static int
 obs_db_query_precipitation_get_hourlies(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
-                                        struct PrecipitationOb **hourlies, size_t *num_hourlies)
+                                        struct ObsPrecipitation **hourlies, size_t *num_hourlies)
 {
     sqlite3_stmt *statement = 0;
 
@@ -545,7 +545,7 @@ obs_db_query_precipitation_get_hourlies(sqlite3 *db, char const *const site, str
 
     *hourlies = calloc(num_rows, sizeof(**hourlies));
     StopIf(!*hourlies, goto ERR_RETURN, "out of memory");
-    struct PrecipitationOb *lcl_hourlies = *hourlies;
+    struct ObsPrecipitation *lcl_hourlies = *hourlies;
 
     char query[256] = {0};
     sprintf(query,
@@ -589,7 +589,7 @@ ERR_RETURN:
 }
 
 static double
-obs_db_query_precipitation_accumulation_in_window(struct PrecipitationOb **last_start, size_t *len,
+obs_db_query_precipitation_accumulation_in_window(struct ObsPrecipitation **last_start, size_t *len,
                                                   time_t start, time_t end)
 {
     double sum_val = 0.0;
@@ -597,9 +597,9 @@ obs_db_query_precipitation_accumulation_in_window(struct PrecipitationOb **last_
     double last_hour_val = 0.0;
     bool trace_flag = false;
 
-    struct PrecipitationOb *end_ptr = *last_start + *len;
+    struct ObsPrecipitation *end_ptr = *last_start + *len;
 
-    for (struct PrecipitationOb *next = *last_start; next < end_ptr; next++) {
+    for (struct ObsPrecipitation *next = *last_start; next < end_ptr; next++) {
         time_t vt = next->valid_time;
         double val = next->precip_in;
 
@@ -639,12 +639,12 @@ obs_db_query_precipitation_accumulation_in_window(struct PrecipitationOb **last_
 int
 obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
                            unsigned window_length, unsigned window_increment,
-                           struct PrecipitationOb **results, size_t *num_results)
+                           struct ObsPrecipitation **results, size_t *num_results)
 {
     assert(results && !*results && "results is null or points to non-null pointer");
     assert(*num_results == 0 && "*num_results not initalized to zero");
 
-    struct PrecipitationOb *hourlies = 0;
+    struct ObsPrecipitation *hourlies = 0;
     size_t num_hourlies = 0;
 
     int rc = obs_db_query_precipitation_get_hourlies(db, site, tr, &hourlies, &num_hourlies);
@@ -666,8 +666,8 @@ obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRa
         end_prd += HOURSEC * window_increment;
     }
 
-    struct PrecipitationOb *lcl_results = *results;
-    struct PrecipitationOb *last_start = hourlies;
+    struct ObsPrecipitation *lcl_results = *results;
+    struct ObsPrecipitation *last_start = hourlies;
     size_t last_start_size = num_hourlies;
     while (end_prd < tr.end && *num_results < calc_num_res) {
         time_t str_prd = end_prd - HOURSEC * window_length;

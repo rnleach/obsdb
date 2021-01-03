@@ -16,12 +16,12 @@ struct ObsTimeRange {
 };
 
 /** A temperature observation. */
-struct TemperatureOb {
+struct ObsTemperature {
     /** Valid time of the observation.
      *
      * If the observation is valid for a specific time, the the valid time will have that time. If
      * it is valid for a period, for instance if it is a daily maximum or minumum temperature, the
-     * valid time is for the time at the end of the valid period. The length of the valid period 
+     * valid time is for the time at the end of the valid period. The length of the valid period
      * will have to be deduced from the function call that created this object.
      */
     time_t valid_time;
@@ -31,7 +31,7 @@ struct TemperatureOb {
 };
 
 /** A precipitation observation. */
-struct PrecipitationOb {
+struct ObsPrecipitation {
     /** The time of the END of the accumulation period.
      *
      * The length of the period depends on the arguments to the function that generated this
@@ -89,16 +89,16 @@ void obs_close(ObsStore **store);
  * \param window_length - the window length in hours.
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak.
- * \param num_results will be the number of TemperatureOb objects stored in \a results. This must
- * be 0 when passed in so it is consistent with the length of \a results.
+ * \param num_results will be the number of \ref ObsTemperature objects stored in \a results. This
+ * must be 0 when passed in so it is consistent with the length of \a results.
  *
  * \returns 0 on success, or a negative number upon failure.
  *
- * The returned values are the maximum temperature within a window of \a window_length and the 
+ * The returned values are the maximum temperature within a window of \a window_length and the
  * time at the END of that window. All end times falling with \a time_range are returned.
  */
 int obs_query_max_t(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
-                    unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+                    unsigned window_end, unsigned window_length, struct ObsTemperature **results,
                     size_t *num_results);
 
 /** Get the daily minimum temperatures.
@@ -110,16 +110,16 @@ int obs_query_max_t(ObsStore *store, char const *const site, struct ObsTimeRange
  * \param window_length the window length in hours.
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak.
- * \param num_results will be the number of TemperatureOb objects stored in \a results. This must
- * be 0 when passed in so it is consistent with the length of \a results.
+ * \param num_results will be the number of \ref ObsTemperature objects stored in \a results. This
+ * must be 0 when passed in so it is consistent with the length of \a results.
  *
  * \returns 0 on success, or a negative number upon failure.
  *
- * The returned values are the maximum temperature within a window of \a window_length and the 
+ * The returned values are the maximum temperature within a window of \a window_length and the
  * time at the END of that window. All end times falling with \a time_range are returned.
  */
 int obs_query_min_t(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
-                    unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+                    unsigned window_end, unsigned window_length, struct ObsTemperature **results,
                     size_t *num_results);
 
 /** Get the accumulated precipitation in inches.
@@ -130,9 +130,9 @@ int obs_query_min_t(ObsStore *store, char const *const site, struct ObsTimeRange
  * \param time_range is the \ref ObsTimeRange which the end time of all windows will fall into.
  * \param window_increment - the time in hours between when windows start.
  * \param results will be stored in an array returned here. This returned array will need to be
- * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. 
- * \param num_results will be the number of PrecipitationOb objects stored in \a results. This must
- * be 0 when passed in so it is consistent with the length of \a results.
+ * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak.
+ * \param num_results will be the number of \ref ObsPrecipitation objects stored in \a results.
+ * This must be 0 when passed in so it is consistent with the length of \a results.
  *
  * \returns 0 on success, or a negative number upon failure.
  *
@@ -142,4 +142,4 @@ int obs_query_min_t(ObsStore *store, char const *const site, struct ObsTimeRange
  */
 int obs_query_precipitation(ObsStore *store, char const *const site, struct ObsTimeRange time_range,
                             unsigned window_length, unsigned window_increment,
-                            struct PrecipitationOb **results, size_t *num_results);
+                            struct ObsPrecipitation **results, size_t *num_results);

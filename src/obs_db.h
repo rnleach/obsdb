@@ -69,7 +69,7 @@ int obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRan
  * \param window_length is the number of hours long the window is for each valid time.
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free().
- * \param num_results will be the number of \ref TemperatureOb objects stored in \a results.
+ * \param num_results will be the number of \ref ObsTemperature objects stored in \a results.
  *
  * \returns 0 on success, or a negative number upon failure. If there is an error \a results will
  * be \c NULL and \a num_results will be set to zero.
@@ -77,7 +77,7 @@ int obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRan
  */
 int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
                               struct ObsTimeRange time_range, unsigned window_end,
-                              unsigned window_length, struct TemperatureOb **results,
+                              unsigned window_length, struct ObsTemperature **results,
                               size_t *num_results);
 
 /** Execute a query for temperatures.
@@ -90,7 +90,7 @@ int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const s
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free(). It must be \c NULL (or \c 0) when passed in to ensure there is no memory
  * leak.
- * \param num_results will be the number of PrecipitationOb objects stored in \a results. This
+ * \param num_results will be the number of \ref ObsPrecipitation objects stored in \a results. This
  * must be 0 when passed in so it is consistent with the length of \a results.
  *
  *
@@ -101,7 +101,7 @@ int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const s
  */
 int obs_db_query_precipitation(sqlite3 *db, char const *const site, struct ObsTimeRange time_range,
                                unsigned window_length, unsigned window_increment,
-                               struct PrecipitationOb **results, size_t *num_results);
+                               struct ObsPrecipitation **results, size_t *num_results);
 
 /** Start a transaction on the local store.
  *
