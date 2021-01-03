@@ -217,7 +217,7 @@ obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRange t
            "for the number of missing time ranges: num_missing_ranges is NULL");
 
     size_t num_tr = 0;
-    struct ObsTimeRange trs[100] = {0};
+    struct ObsTimeRange trs[100] = {{0}};
 
     char query[256] = {0};
     sprintf(query,
