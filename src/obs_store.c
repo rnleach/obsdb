@@ -84,28 +84,36 @@ obs_close(struct ObsStore **store)
 
 /** Internal implementation of obs_query_max_t() and obs_query_min_t().
  *
- * \param store - same as obs_query_max_t()
- * \param site - same as obs_query_max_t()
- * \param start_time - same as obs_query_max_t()
- * \param end_time - same as obs_query_max_t()
- * \param window_length - same as obs_query_max_t()
- * \param results - same as obs_query_max_t()
- * \param num_results - same as obs_query_max_t()
+ * \param store - same as \ref obs_query_max_t()
+ * \param site - same as \ref obs_query_max_t()
+ * \param time_range - same as \ref obs_query_max_t()
+ * \param window_length - same as \ref obs_query_max_t()
+ * \param results - same as \ref obs_query_max_t()
+ * \param num_results - same as \ref obs_query_max_t()
  * \param max_min_mode is either OBS_DB_MAX_MODE or OBS_DB_MIN_MODE.
  *
  * All parameters other than \a max_min_mode are as in obs_query_max_t() and obs_query_min_t().
  */
 static int
-obs_query_t(struct ObsStore *store, char const *const site, time_t start_time, time_t end_time,
-            unsigned window_length, struct TemperatureOb **results, size_t *num_results,
-            int max_min_mode)
+obs_query_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
+            unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+            size_t *num_results, int max_min_mode)
 {
     assert(max_min_mode == OBS_DB_MAX_MODE || max_min_mode == OBS_DB_MIN_MODE);
 
     char site_buf[32] = {0};
     obs_util_strcpy_to_lowercase(sizeof(site_buf), site_buf, site);
 
-    int have_data = obs_db_have_inventory(store->db, "temperature", site_buf, start_time, end_time);
+    // Expand the time range to get enough data for ALL windows starting in the provided time
+    // range.
+    struct TimeRange need_hourlies_tr = tr;
+    need_hourlies_tr.start -= HOURSEC * window_length;
+
+    struct TimeRange *missing_ranges = 0;
+    size_t num_missing_ranges = 0;
+
+    int have_data = obs_db_have_inventory(store->db, site_buf, need_hourlies_tr, &missing_ranges,
+                                          &num_missing_ranges);
 
     char *msg = 0;
     if (max_min_mode == OBS_DB_MAX_MODE) {
@@ -118,51 +126,58 @@ obs_query_t(struct ObsStore *store, char const *const site, time_t start_time, t
 
     int rc = 0;
     if (!have_data) {
-        rc = obs_download(store->db, &store->curl, store->synoptic_labs_api_key, site_buf,
-                          start_time, end_time);
+        for (size_t i = 0; i < num_missing_ranges; i++) {
 
-        StopIf(rc < 0, goto ERR_RETURN, "Error downloading data.");
+            rc = obs_download(store->db, &store->curl, store->synoptic_labs_api_key, site_buf,
+                              missing_ranges[i]);
+
+            StopIf(rc < 0, goto ERR_RETURN, "Error downloading data.");
+        }
     }
 
     // Just take whatever data is available from the database now that we've tried to update it.
-    rc = obs_db_query_temperatures(store->db, max_min_mode, site_buf, start_time, end_time,
-                                   window_length, results, num_results);
+    rc = obs_db_query_temperatures(store->db, max_min_mode, site_buf, tr, window_end, window_length,
+                                   results, num_results);
     StopIf(rc < 0, goto ERR_RETURN, "Error fetching data from local store.");
 
+    free(missing_ranges);
     return rc;
 
 ERR_RETURN:
 
     // Ensure these invariants are still in place.
     assert(*num_results == 0 && results && !*results);
+    free(missing_ranges);
     return rc;
 }
 
 int
-obs_query_max_t(struct ObsStore *store, char const *const site, time_t start_time, time_t end_time,
-                unsigned window_length, struct TemperatureOb **results, size_t *num_results)
+obs_query_max_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
+                unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+                size_t *num_results)
 {
     // These conditions are specified in the documentation.
     assert(*num_results == 0 && results && !*results);
 
-    return obs_query_t(store, site, start_time, end_time, window_length, results, num_results,
+    return obs_query_t(store, site, tr, window_end, window_length, results, num_results,
                        OBS_DB_MAX_MODE);
 }
 
 int
-obs_query_min_t(struct ObsStore *store, char const *const site, time_t start_time, time_t end_time,
-                unsigned window_length, struct TemperatureOb **results, size_t *num_results)
+obs_query_min_t(struct ObsStore *store, char const *const site, struct TimeRange tr,
+                unsigned window_end, unsigned window_length, struct TemperatureOb **results,
+                size_t *num_results)
 {
     // These conditions are specified in the documentation.
     assert(*num_results == 0 && results && !*results);
 
-    return obs_query_t(store, site, start_time, end_time, window_length, results, num_results,
+    return obs_query_t(store, site, tr, window_end, window_length, results, num_results,
                        OBS_DB_MIN_MODE);
 }
 
 int
-obs_query_precipitation(struct ObsStore *store, char const *const site, time_t start_time,
-                        time_t end_time, unsigned window_length, unsigned window_increment,
+obs_query_precipitation(struct ObsStore *store, char const *const site, struct TimeRange tr,
+                        unsigned window_length, unsigned window_increment,
                         struct PrecipitationOb **results, size_t *num_results)
 {
     // These conditions are specified in the documentation.
@@ -171,23 +186,35 @@ obs_query_precipitation(struct ObsStore *store, char const *const site, time_t s
     char site_buf[32] = {0};
     obs_util_strcpy_to_lowercase(sizeof(site_buf), site_buf, site);
 
-    int have_data =
-        obs_db_have_inventory(store->db, "precipitation", site_buf, start_time, end_time);
+    // Expand the time range to get enough data for ALL windows ending in the provided time
+    // range.
+    struct TimeRange need_hourlies_tr = tr;
+    need_hourlies_tr.start -= HOURSEC * window_length;
+
+    struct TimeRange *missing_ranges = 0;
+    size_t num_missing_ranges = 0;
+
+    int have_data = obs_db_have_inventory(store->db, site_buf, need_hourlies_tr, &missing_ranges,
+                                          &num_missing_ranges);
 
     StopIf(have_data < 0, return -1, "precipitation query aborted, database error.");
 
     int rc = 0;
     if (!have_data) {
-        rc = obs_download(store->db, &store->curl, store->synoptic_labs_api_key, site_buf,
-                          start_time, end_time);
+        for (size_t i = 0; i < num_missing_ranges; i++) {
+            rc = obs_download(store->db, &store->curl, store->synoptic_labs_api_key, site_buf,
+                              missing_ranges[i]);
 
-        StopIf(rc < 0, goto ERR_RETURN, "Error downloading data.");
+            StopIf(rc < 0, goto ERR_RETURN, "Error downloading data.");
+        }
     }
 
     // Just take whatever data is available from the database now that we have tried to update it.
-    rc = obs_db_query_precipitation(store->db, site_buf, start_time, end_time, window_length,
-                                    window_increment, results, num_results);
+    rc = obs_db_query_precipitation(store->db, site_buf, tr, window_length, window_increment,
+                                    results, num_results);
     StopIf(rc < 0, goto ERR_RETURN, "Error fetching data from local store.");
+
+    free(missing_ranges);
 
     return rc;
 
@@ -195,5 +222,6 @@ ERR_RETURN:
 
     // Ensure these invariants are still in place.
     assert(*num_results == 0 && results && !*results);
+    free(missing_ranges);
     return rc;
 }

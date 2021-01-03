@@ -3,6 +3,8 @@
  */
 #pragma once
 
+#include "obs.h"
+
 #include <curl/curl.h>
 #include <sqlite3.h>
 
@@ -15,10 +17,9 @@
  * \param synoptic_labs_api_key is a \c NULL terminated string with the SynopticLabs API key.
  * \param site_id is a \c NULL terminated string, all lowercase, with the SynopticLabs site
  * identifier.
- * \param start is the starting time to request data for.
- * \param end is the ending time to request data for.
+ * \param time_range is the time range to request data for.
  *
  * \returns 0 on success and -1 on failure.
  */
 int obs_download(sqlite3 *local_store, CURL **curl, char const *const synoptic_labs_api_key,
-                 char const *site_id, time_t start, time_t end);
+                 char const *site_id, struct TimeRange time_range);

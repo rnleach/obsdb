@@ -16,7 +16,7 @@
  * If the database does not exist, it will create the full path to the file and the file, then
  * open the database connection.
  *
- * \returns \c NULL on error.
+ * \returns \c 0 on error.
  */
 sqlite3 *obs_db_open_create(void);
 
@@ -29,17 +29,20 @@ int obs_db_close(sqlite3 *db);
 /** Query the database to see if a request can be fulfilled.
  *
  * \param db the database handle to query.
- * \param element the weather element we want. Currently only "temperature" and "precipitation" are
- * accepted.
  * \param site is the site in question, it must be in all lowercase.
- * \param start_time is the start time of the query.
- * \param end_time is the end time of the query.
+ * \param time_range the time range the query will cover.
+ * \param missing_times If this is not \c 0, then any time ranges with missing data will be placed
+ * in an allocated array here. If this is not \c 0, and there are no missing time ranges, the
+ * pointed to pointer will be \c 0. \ref *missing_times must be \c 0 upon entry.
+ * \param num_missing_times must not be \c 0 if \ref missing_times is not \c 0, otherwise it is
+ * ignored. The number of values returned in \ref missing_times will be stored here. If there are no
+ * missing times, this will be set to zero.
  *
- * \returns -1 if there is a database error, 0 if not enough data was available, and 1 if enough
- * data is available.
+ * \returns -1 if there is an error, 0 if not enough data was available, and 1 if enough data is
+ * available.
  */
-int obs_db_have_inventory(sqlite3 *db, char const *const element, char const *const site,
-                          time_t start_time, time_t end_time);
+int obs_db_have_inventory(sqlite3 *db, char const *const site, struct TimeRange time_range,
+                          struct TimeRange **missing_times, size_t *num_missing_times);
 
 /** Get maximum temperatures.
  *
@@ -61,43 +64,93 @@ int obs_db_have_inventory(sqlite3 *db, char const *const element, char const *co
  * \param max_min_mode is an integer to select whether to query maximum or minimum temperature. See
  * macros OBS_DB_MAX_MODE and OBS_DB_MIN_MODE.
  * \param site is the site in question, it must be in all lowercase.
- * \param start_time is the start time of the query.
- * \param end_time is the end time of the query.
+ * \param time_range the time range the query will cover.
+ * \param window_end is the hour of the day (UTC) that the window should end.
  * \param window_length is the number of hours long the window is for each valid time.
  * \param results will be stored in an array returned here. This returned array will need to be
  * freed with \c free().
- * \param num_results will be the number of \c TemperatureOb objects stored in \c results.
+ * \param num_results will be the number of \ref TemperatureOb objects stored in \ref results.
  *
- * \returns 0 on success, or a negative number upon failure. If there is an error *results will be
- * \c NULL and *num_results will be set to zero.
+ * \returns 0 on success, or a negative number upon failure. If there is an error \ref results will
+ * be \c NULL and \ref num_results will be set to zero.
  *
- * The returned values are the maximum temperature within a window of \c window_length. The first
- * window starts at \c start_time, and each subsequent window starts 24 hours later.
  */
 int obs_db_query_temperatures(sqlite3 *db, int max_min_mode, char const *const site,
-                              time_t start_time, time_t end_time, unsigned window_length,
-                              struct TemperatureOb **results, size_t *num_results);
+                              struct TimeRange time_range, unsigned window_end,
+                              unsigned window_length, struct TemperatureOb **results,
+                              size_t *num_results);
 
 /** Execute a query for temperatures.
  *
  * \param db the database handle to query.
  * \param site is the site in question, it must be in all lowercase.
- * \param start_time is the start time of the query.
- * \param end_time is the end time of the query.
+ * \param time_range the time range the query will cover.
  * \param window_length - the window length in hours.
  * \param window_increment - the time in hours between when windows start.
  * \param results will be stored in an array returned here. This returned array will need to be
- * freed with \c free(). It must be \c NULL when passed in to ensure there is no memory leak. It's
- * the user's responsibility to manage this memory, this function will not free it for you.
- * \param num_results will be the number of PrecipitationOb objects stored in \a results. This must
- * be 0 when passed in so it is consistent with the length of \a results.
+ * freed with \c free(). It must be \c NULL (or \c 0) when passed in to ensure there is no memory
+ * leak.
+ * \param num_results will be the number of PrecipitationOb objects stored in \ref results. This
+ * must be 0 when passed in so it is consistent with the length of \ref results.
  *
  *
- * \returns 0 on success, or a negative number upon failure. If there is an error *results will be
- * \c NULL and *num_results will be set to zero, which should be the same as when they were passed
- * in as arguments.
+ * \returns 0 on success, or a negative number upon failure. If there is an error \ref results will
+ * be \c NULL and \ref num_results will be set to zero, which should be the same as when they were
+ * passed in as arguments.
  *
  */
-int obs_db_query_precipitation(sqlite3 *db, char const *const site, time_t start_time,
-                               time_t end_time, unsigned window_length, unsigned window_increment,
+int obs_db_query_precipitation(sqlite3 *db, char const *const site, struct TimeRange time_range,
+                               unsigned window_length, unsigned window_increment,
                                struct PrecipitationOb **results, size_t *num_results);
+
+/** Start a transaction on the local store.
+ *
+ * \param db the database handle.
+ *
+ * \returns 0 on success or a negative number on failure.
+ */
+int obs_db_start_transaction(sqlite3 *db);
+
+/** Indicate that transaction should be committed. */
+#define OBS_DB_TRANSACTION_COMMIT 0
+
+/** Indicate that transaction should be rolled back. */
+#define OBS_DB_TRANSACTION_ROLLBACK 1
+
+/** Finish a transaction on the local store.
+ *
+ * \param db the database handle.
+ * \param action whether to commit or rollback, should be \ref OBS_DB_TRANSACTION_ROLLBACK or
+ * \ref OBS_DB_TRANSACTION_COMMIT.
+ *
+ * \returns 0 on success or a negative number on failure.
+ */
+int obs_db_finish_transaction(sqlite3 *db, int action);
+
+/** Create an insert statement for the local store.
+ *
+ * \param db the database to make the prepared statement on.
+ *
+ * \returns the statement handle or NULL on failure.
+ */
+sqlite3_stmt *obs_db_create_insert_statement(sqlite3 *db);
+
+/** Finalize and clean up the insert statement.
+ *
+ * \param stmt is the statement to clean up.
+ *
+ */
+void obs_db_finalize_insert_statement(sqlite3_stmt *stmt);
+
+/** Insert some values into the local store.
+ *
+ * \param insert_stmt is a statement returned by \ref obs_db_create_insert_statement()
+ * \param valid_time is the valid time of the observation.
+ * \param site_id is the SynopticLabs (mesowest) site id.
+ * \param temperature_f is the temperature in Fahrenheit.
+ * \param precip_inches is the 1-hour precipitation in inches.
+ *
+ * \returns 0 on success or a negative number on failure.
+ */
+int obs_db_insert(sqlite3_stmt *insert_stmt, time_t valid_time, char const *const site_id,
+                  double temperature_f, double precip_inches);

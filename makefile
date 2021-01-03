@@ -16,9 +16,6 @@ CFLAGS = -g -fPIC -Wall -Werror -O3 -std=c11 -I$(SOURCEDIR)
 # enable some time functions for POSIX
 CFLAGS += -D_DEFAULT_SOURCE -D_XOPEN_SOURCE -D_GNU_SOURCE
 
-# glib
-CFLAGS += `pkg-config --cflags glib-2.0`
-
 # cURL library
 CFLAGS += `curl-config --cflags`
 
