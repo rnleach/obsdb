@@ -207,8 +207,10 @@ int
 obs_db_have_inventory(sqlite3 *db, char const *const site, struct ObsTimeRange tr,
                       struct ObsTimeRange **missing_ranges, size_t *num_missing_ranges)
 {
+    assert(db && "null db");
     assert(site && "null site");
     assert(tr.start < tr.end && "time range ends before it starts!");
+    assert(num_missing_ranges && !*num_missing_ranges && missing_ranges && !*missing_ranges);
 
     sqlite3_stmt *statement = 0;
 

@@ -220,7 +220,7 @@ row_callback(int cause_char, void *userdata)
 /*-------------------------------------------------------------------------------------------------
  *                       CURL state and callback for handling data.
  *-----------------------------------------------------------------------------------------------*/
-/**Holds state for callbacks from cURL to libcsv. */
+/** Holds state for callbacks from cURL to libcsv. */
 struct CurlToCsvState {
     struct CsvToSqliteState *csv_state; /**< State to pass through to the csv parser. */
     struct csv_parser parser;           /**< The csv parser. */

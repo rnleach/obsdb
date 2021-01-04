@@ -24,7 +24,7 @@
  * fulfilled locally instead of via a web request.
  */
 struct ObsStore {
-    /** Local, on disk storage.*/
+    /** Local, on disk storage. */
     sqlite3 *db;
 
     /** Handle to cURL object in case a web request is needed. */
@@ -40,14 +40,15 @@ struct ObsStore {
 struct ObsStore *
 obs_connect(char const *const synoptic_labs_api_key)
 {
-    // using calloc forces both members to null.
     struct ObsStore *new = calloc(1, sizeof(*new));
     StopIf(!new, return 0, "Memory allocation error.");
 
     sqlite3 *db = obs_db_open_create();
     StopIf(!db, goto ERR_RETURN, "unable to connect to sqlite");
 
-    ObsStore new_static = {.synoptic_labs_api_key = synoptic_labs_api_key, .db = db, .curl = 0};
+    struct ObsStore new_static = {
+        .synoptic_labs_api_key = synoptic_labs_api_key, .db = db, .curl = 0};
+
     memcpy(new, &new_static, sizeof(*new));
 
     return new;
@@ -63,7 +64,7 @@ obs_close(struct ObsStore **store)
 {
     StopIf(!store || !(*store), return, "Warning NULL passed for obs_close.");
 
-    ObsStore *ptr = *store;
+    struct ObsStore *ptr = *store;
 
     int result = obs_db_close(ptr->db);
     if (result != SQLITE_OK) {
@@ -87,18 +88,25 @@ obs_close(struct ObsStore **store)
  * \param store - same as \ref obs_query_max_t()
  * \param site - same as \ref obs_query_max_t()
  * \param time_range - same as \ref obs_query_max_t()
+ * \param window_end - same as \ref obs_query_max_t()
  * \param window_length - same as \ref obs_query_max_t()
  * \param results - same as \ref obs_query_max_t()
  * \param num_results - same as \ref obs_query_max_t()
- * \param max_min_mode is either OBS_DB_MAX_MODE or OBS_DB_MIN_MODE.
+ * \param max_min_mode is either \ref OBS_DB_MAX_MODE or \ref OBS_DB_MIN_MODE.
  *
- * All parameters other than \a max_min_mode are as in obs_query_max_t() and obs_query_min_t().
+ * All parameters other than \a max_min_mode are as in \ref obs_query_max_t() and
+ * \ref obs_query_min_t().
  */
 static int
 obs_store_query_t(struct ObsStore *store, char const *const site, struct ObsTimeRange tr,
                   unsigned window_end, unsigned window_length, struct ObsTemperature **results,
                   size_t *num_results, int max_min_mode)
 {
+    assert(store);
+    assert(site);
+    assert(tr.start < tr.end && "backwards time range");
+    assert(window_end <= 24 && "there is only 24 hours in a day");
+    assert(results && !*results && num_results && !*num_results);
     assert(max_min_mode == OBS_DB_MAX_MODE || max_min_mode == OBS_DB_MIN_MODE);
 
     char site_buf[32] = {0};
@@ -138,7 +146,7 @@ obs_store_query_t(struct ObsStore *store, char const *const site, struct ObsTime
 ERR_RETURN:
 
     // Ensure these invariants are still in place.
-    assert(*num_results == 0 && results && !*results);
+    assert(num_results && !*num_results && results && !*results);
     free(missing_ranges);
     return rc;
 }
@@ -149,7 +157,11 @@ obs_query_max_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
                 size_t *num_results)
 {
     // These conditions are specified in the documentation.
-    assert(*num_results == 0 && results && !*results);
+    assert(store);
+    assert(site);
+    assert(tr.start < tr.end && "backwards time range");
+    assert(window_end <= 24 && "there is only 24 hours in a day");
+    assert(num_results && !*num_results && results && !*results);
 
     return obs_store_query_t(store, site, tr, window_end, window_length, results, num_results,
                              OBS_DB_MAX_MODE);
@@ -161,7 +173,11 @@ obs_query_min_t(struct ObsStore *store, char const *const site, struct ObsTimeRa
                 size_t *num_results)
 {
     // These conditions are specified in the documentation.
-    assert(*num_results == 0 && results && !*results);
+    assert(store);
+    assert(site);
+    assert(tr.start < tr.end && "backwards time range");
+    assert(window_end <= 24 && "there is only 24 hours in a day");
+    assert(num_results && !*num_results && results && !*results);
 
     return obs_store_query_t(store, site, tr, window_end, window_length, results, num_results,
                              OBS_DB_MIN_MODE);
@@ -173,7 +189,11 @@ obs_query_precipitation(struct ObsStore *store, char const *const site, struct O
                         struct ObsPrecipitation **results, size_t *num_results)
 {
     // These conditions are specified in the documentation.
-    assert(*num_results == 0 && results && !*results);
+    assert(store);
+    assert(site);
+    assert(tr.start < tr.end && "backwards time range");
+    assert(window_offset <= 24 && "there is only 24 hours in a day");
+    assert(num_results && !*num_results && results && !*results);
 
     char site_buf[32] = {0};
     obs_util_strcpy_to_lowercase(sizeof(site_buf), site_buf, site);
@@ -212,7 +232,7 @@ obs_query_precipitation(struct ObsStore *store, char const *const site, struct O
 ERR_RETURN:
 
     // Ensure these invariants are still in place.
-    assert(*num_results == 0 && results && !*results);
+    assert(num_results && !*num_results && results && !*results);
     free(missing_ranges);
     return rc;
 }
