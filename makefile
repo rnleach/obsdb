@@ -76,6 +76,7 @@ directories:
 	@echo Creating directory $<
 	$(HIDE)mkdir -p $(OBJDIR) 2>/dev/null
 	$(HIDE)mkdir -p $(BUILDDIR) 2>/dev/null
+	$(HIDE)mkdir -p $(DOCDIR) 2>/dev/null
 
 clean:
 	$(HIDE)rm -rf $(OBJDIR) $(BUILDDIR) $(DOCDIR) 2>/dev/null
