@@ -1,3 +1,5 @@
+This project has been abandoned and is archived for now.
+
 # obsdb
 A library for downloading and archiving SynopticLabs weather data.
 
